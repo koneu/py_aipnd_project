@@ -1,31 +1,8 @@
 import torch
-from torch import nn
-import numpy as np
-from typing import Tuple, List, Union
-from pathlib import Path
-from PIL import Image
 import torchvision.transforms as transforms
-from torchvision import models
-import matplotlib.pyplot as plt
-import numpy as np
-import sys
-import predict
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
-from torchvision import models
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
-import torch.nn.functional as F
-import optuna
-from optuna.trial import TrialState
-from train import train_model, eval_model
-import os
-import json
-from predict import predict_class
-
+import load_model
 
 def evaluate_test_set(model, test_loader, classes, cat_to_name, device):
     model.eval()
@@ -80,32 +57,13 @@ dataset_test = ImageFolder(root=test_dir, transform=data_transforms)
 BATCHSIZE = 32
 test_loader = DataLoader(dataset_test, batch_size=BATCHSIZE, shuffle=False)
 
-#static,s o we don't reload model etc. every lookup
-_model = None
-_classes = None
-_cat_to_name = None
-
-def _load_model(checkpoint_path: str):
-    global _model, _classes, _cat_to_name
-    if _model is not None:
-        return  # already loaded, skip
-    
-    checkpoint = torch.load(checkpoint_path, weights_only=False)
-    _classes = checkpoint["classes"]
-    _cat_to_name = checkpoint["cat_to_name"]
-    
-    _model = models.resnet50(weights=None)
-    _model.fc = nn.Linear(_model.fc.in_features, len(_classes))
-    _model.load_state_dict(checkpoint["model_state_dict"])
-    _model.eval()
-
 if __name__ == "__main__":
     checkpoint_path = "checkpoints/best_model.pth"
 
-    _load_model(checkpoint_path)
+    load_model.load_model(checkpoint_path)
 
     results, accuracy = evaluate_test_set(
-        _model, test_loader, _classes, _cat_to_name, DEVICE
+        load_model.model, test_loader, load_model.classes, load_model.cat_to_name, DEVICE
     )
 
     wrong = [r for r in results if not r["correct"]]

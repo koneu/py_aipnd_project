@@ -5,10 +5,10 @@ from typing import Tuple, List, Union
 from pathlib import Path
 from PIL import Image
 import torchvision.transforms as transforms
-from torchvision import models
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import load_model
 
 def process_image(image: Union[str, Image.Image]) -> np.ndarray:
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
@@ -45,35 +45,16 @@ def predict(
     return probs.squeeze().tolist(), indices.squeeze().tolist()
 
 
-#static,s o we don't reload model etc. every lookup
-_model = None
-_classes = None
-_cat_to_name = None
-
-def _load_model(checkpoint_path: str):
-    global _model, _classes, _cat_to_name
-    if _model is not None:
-        return  # already loaded, skip
-    
-    checkpoint = torch.load(checkpoint_path, weights_only=False)
-    _classes = checkpoint["classes"]
-    _cat_to_name = checkpoint["cat_to_name"]
-    
-    _model = models.resnet50(weights=None)
-    _model.fc = nn.Linear(_model.fc.in_features, len(_classes))
-    _model.load_state_dict(checkpoint["model_state_dict"])
-    _model.eval()
-
 
 def predict_class(checkpoint_path: str, image_path: str, topk: int = 5) -> list[tuple[str, float]]:
-    _load_model(checkpoint_path)
-    probs, indices = predict(image_path, _model, topk)
-    classes = [_classes[i] for i in indices]
+    load_model.load_model(checkpoint_path)
+    probs, indices = predict(image_path, load_model.model, topk)
+    classes = [load_model.classes[i] for i in indices]
     return list(zip(classes, probs))
 
 def predict_label(checkpoint_path: str, image_path: str, topk: int = 5) -> list[tuple[str, float]]:
     results = predict_class(checkpoint_path, image_path, topk)
-    return [(_cat_to_name[cls], prob) for cls, prob in results]
+    return [(load_model.cat_to_name[cls], prob) for cls, prob in results]
 
 
 def imshow(image, ax=None, title=None):

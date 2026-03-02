@@ -1,14 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision
 import torchvision.transforms as transforms
 from torchvision import models
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
-import torch.nn.functional as F
 import optuna
-from optuna.trial import TrialState
 from train import train_model, eval_model
 import os
 import json
