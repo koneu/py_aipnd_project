@@ -1,3 +1,11 @@
+db.*
+flowers/
+*.png
+checkpoints/model*
+# best model intentionally kept in
+
+*.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
