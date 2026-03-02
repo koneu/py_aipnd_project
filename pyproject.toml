@@ -24,6 +24,10 @@ libjpeg-turbo = { version = "*", channel = "conda-forge" }
 optuna = "*"
 optuna-dashboard = "*"
 matplotlib = "*"
+ipykernel = "*"
+ipython = "*"
+notebook = "*"
+
 
 
 [tool.pixi.pypi-dependencies]

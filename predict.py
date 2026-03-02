@@ -14,7 +14,6 @@ def process_image(image: Union[str, Image.Image]) -> np.ndarray:
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
         returns an Numpy array.
     '''                
-    # If a string path is passed, open the image
     if isinstance(image, str):
         image = Image.open(image).convert("RGB")
     
@@ -23,7 +22,7 @@ def process_image(image: Union[str, Image.Image]) -> np.ndarray:
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])  # missing normalization!
+                             std=[0.229, 0.224, 0.225])
     ])
 
     return transform(image).unsqueeze(0)
@@ -43,8 +42,6 @@ def predict(
         probs, indices = torch.topk(probs, topk)
 
     return probs.squeeze().tolist(), indices.squeeze().tolist()
-
-
 
 def predict_class(checkpoint_path: str, image_path: str, topk: int = 5) -> list[tuple[str, float]]:
     load_model.load_model(checkpoint_path)
