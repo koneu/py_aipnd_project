@@ -32,10 +32,12 @@ def process_image(image: Union[str, Image.Image]) -> np.ndarray:
 def predict(
     image_path: Union[str, Path], 
     model: nn.Module, 
-    topk: int = 5
+    topk: int = 5,
+    DEVICE: torch.device = torch.device("cpu")
 ) -> Tuple[List[float], List[str]]:
     model.eval()
     image = process_image(image_path)
+    image.to(DEVICE)
 
     with torch.no_grad():
         output = model(image)
@@ -44,14 +46,14 @@ def predict(
 
     return probs.squeeze().tolist(), indices.squeeze().tolist()
 
-def predict_class(checkpoint_path: str, image_path: str, topk: int = 5) -> list[tuple[str, float]]:
-    load_model.load_model(checkpoint_path)
+def predict_class(checkpoint_path: str, image_path: str, topk: int = 5, DEVICE: torch.device = torch.device("cpu")) -> list[tuple[str, float]]:
+    load_model.load_model(checkpoint_path, DEVICE)
     probs, indices = predict(image_path, load_model.model, topk)
     classes = [load_model.classes[i] for i in indices]
     return list(zip(classes, probs))
 
-def predict_label(checkpoint_path: str, image_path: str, topk: int = 5) -> list[tuple[str, float]]:
-    results = predict_class(checkpoint_path, image_path, topk)
+def predict_label(checkpoint_path: str, image_path: str, topk: int = 5, DEVICE: torch.device = torch.device("cpu")) -> list[tuple[str, float]]:
+    results = predict_class(checkpoint_path, image_path, topk, DEVICE)
     return [(load_model.cat_to_name[cls], prob) for cls, prob in results]
 
 
@@ -92,6 +94,7 @@ if __name__ == "__main__":
         DEVICE = torch.device("cpu")
     else:
         DEVICE = torch.device("cuda")
+    print(f"predicting on: {DEVICE}")
 
     results = predict_label(args.checkpoint, args.image, topk=args.topk)
     print(results)
