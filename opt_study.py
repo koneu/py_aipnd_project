@@ -83,7 +83,7 @@ def objective(trial):
 
     # let optuna figure out the parameters
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
-    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
     optimizer = getattr(optim, optimizer_name)(model.fc.parameters(), lr=lr)
     
     best_accuracy = 0.0
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         study_name="resnet50_flower_finetuning",
         direction="maximize", 
         load_if_exists=True,
-        pruner=optuna.pruners.MedianPruner()
+        pruner=optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=3)
     )
     study.optimize(objective, n_trials=20, callbacks=[callback])
 

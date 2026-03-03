@@ -7,3 +7,5 @@ Project code for Udacity's AI Programming with Python Nanodegree program. In thi
 # Usage
 
 You have to manually download the training data directly under /flowers/... as specified in the `Image Classifier Project.ipynb`
+
+Since we save one checkpoint in this repo, we need git lfs.

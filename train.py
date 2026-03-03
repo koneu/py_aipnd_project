@@ -88,12 +88,12 @@ if __name__ == "__main__":
     # default values from opt_study; expecting 90% accuracy
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, default='cuda', help='Device to use (cpu or cuda)')
-    parser.add_argument('--lr', type=float, default=0.0005008419921592262, help='Learning rate for the optimizer')
-    parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
-    parser.add_argument('--hu', type=int, default=2454, help='Number of hidden units')
-    parser.add_argument('--do', type=float, default=0.38697266011799636, help='Dropout rate')
+    parser.add_argument('--lr', type=float, default=0.0005288678834997863, help='Learning rate for the optimizer')
+    parser.add_argument('--epochs', type=int, default=15, help='Number of training epochs')
+    parser.add_argument('--hu', type=int, default=886, help='Number of hidden units')
+    parser.add_argument('--do', type=float, default=0.12008030915100107, help='Dropout rate')
     args = parser.parse_args()
-    optimizer_name = "Adam"
+    optimizer_name = "RMSprop"
 
     # Check availability and user preference
     hidden_units = args.hu
