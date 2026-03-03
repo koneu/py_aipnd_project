@@ -165,12 +165,19 @@ if __name__ == "__main__":
     print(f"Test set accuracy, loss: {accuracy_loss}")
     print("=====================")
 
+    params = {
+        "hidden_units": hidden_units,
+        "dropout": args.do,
+        "optimizer": optimizer_name,
+        "lr": lr
+    }
+
     with open("cat_to_name.json", "r") as f:
         cat_to_name = json.load(f)
         torch.save({
             "model_state_dict": model.state_dict(),
-            "best_params": None,
-            "best_value": None,
+            "best_params": params,
+            "best_value": accuracy_loss[0],
             "classes": dataset_train.classes,
             "epoch": epoch,
             "cat_to_name": cat_to_name,      
