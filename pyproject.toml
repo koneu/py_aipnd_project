@@ -1,6 +1,12 @@
 [project]
 authors = [{name = "Your Name", email = "youremail@yourdomain.com"}]
-dependencies = []
+dependencies = [
+    "torch",
+    "torchvision",
+    "transformers",
+    "pillow",
+    "optuna"
+]
 name = "py_finetuning"
 requires-python = ">= 3.12"
 version = "0.1.0"
@@ -28,8 +34,6 @@ ipykernel = "*"
 ipython = "*"
 notebook = "*"
 
-
-
 [tool.pixi.pypi-dependencies]
 transformers = "*"
 
@@ -37,6 +41,7 @@ transformers = "*"
 opt = "python opt_study.py"
 pred = "python predict.py"
 test = "python test.py"
+train = "python train.py"
 opt_vis = "optuna-dashboard sqlite:///db.sqlite3"
 
 [tool.pixi.system-requirements]

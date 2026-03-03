@@ -20,6 +20,11 @@ valid_dir = data_dir + '/valid'
 test_dir = data_dir + '/test'
 
 data_transforms = transforms.Compose([
+
+    transforms.RandomResizedCrop(224),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomRotation(degrees=15),
+
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -32,8 +37,8 @@ dataset_test = ImageFolder(root=test_dir, transform=data_transforms)
 # only got one label per image so no one-hot encoding
 
 # --- CONFIG -----------------
-BATCHSIZE = 32
-EPOCHS = 10 
+BATCHSIZE = 64
+EPOCHS = 15
 CHECKPOINT_DIR = "checkpoints"
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
@@ -48,9 +53,12 @@ print(f"BATCHSIZE: {BATCHSIZE}")
 print(f"Saving Checkpoints to: {CHECKPOINT_DIR}")
 print(f"--------------")
 
-train_loader = DataLoader(dataset_train, batch_size=BATCHSIZE, shuffle=True)
-val_loader = DataLoader(dataset_valid, batch_size=BATCHSIZE, shuffle=False)
-test_loader = DataLoader(dataset_test, batch_size=BATCHSIZE, shuffle=False)
+train_loader = DataLoader(dataset_train, batch_size=BATCHSIZE, shuffle=True, num_workers=4,pin_memory=True)
+val_loader = DataLoader(dataset_valid, batch_size=BATCHSIZE, shuffle=False, num_workers=4,pin_memory=True)
+test_loader = DataLoader(dataset_test, batch_size=BATCHSIZE, shuffle=False, num_workers=4,pin_memory=True)
+
+with open("cat_to_name.json", "r") as f:
+    CAT_TO_NAME = json.load(f)
 
 def objective(trial):
     # --- Load pretrained ResNet50 -----------------------------------
@@ -60,9 +68,17 @@ def objective(trial):
     for param in model.parameters():
         param.requires_grad = False
 
+    hidden_units = trial.suggest_int("hidden_units", 64, 4096, log=True)
+    dropout_rate = trial.suggest_float("dropout", 0.0, 0.5)
+
     # Replace classifier layer with our own
     num_classes = len(dataset_train.classes)
-    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    model.fc = nn.Sequential(
+        nn.Linear(model.fc.in_features, hidden_units),
+        nn.ReLU(),
+        nn.Dropout(p=dropout_rate),
+        nn.Linear(hidden_units, num_classes)
+    )
     model = model.to(DEVICE)
 
     # let optuna figure out the parameters
@@ -77,20 +93,18 @@ def objective(trial):
         train_model(model, train_loader, optimizer, DEVICE)
         
         # Validation
-        accuracy = eval_model(model, val_loader, DEVICE)
+        accuracy, loss = eval_model(model, val_loader, DEVICE)
 
         if accuracy > best_accuracy:
             best_accuracy = accuracy
-            with open("cat_to_name.json", "r") as f:
-                cat_to_name = json.load(f)
-                torch.save({
-                    "model_state_dict": model.state_dict(),
-                    "best_params": trial.params,
-                    "best_value": accuracy,
-                    "classes": dataset_train.classes,
-                    "epoch": epoch,
-                    "cat_to_name": cat_to_name,      
-                }, os.path.join(CHECKPOINT_DIR, f"model_trial_{trial.number}.pth"))
+            torch.save({
+                "model_state_dict": model.state_dict(),
+                "best_params": trial.params,
+                "best_value": accuracy,
+                "classes": dataset_train.classes,
+                "epoch": epoch,
+                "cat_to_name": CAT_TO_NAME,      
+            }, os.path.join(CHECKPOINT_DIR, f"model_trial_{trial.number}.pth"))
 
         trial.report(accuracy, epoch)
         if trial.should_prune():
@@ -112,7 +126,8 @@ if __name__ == "__main__":
         storage="sqlite:///db.sqlite3", 
         study_name="resnet50_flower_finetuning",
         direction="maximize", 
-        load_if_exists=True
+        load_if_exists=True,
+        pruner=optuna.pruners.MedianPruner()
     )
     study.optimize(objective, n_trials=20, callbacks=[callback])
 

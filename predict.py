@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import load_model
+import argparse
 
 def process_image(image: Union[str, Image.Image]) -> np.ndarray:
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
@@ -76,13 +77,20 @@ def imshow(image, ax=None, title=None):
     return ax
 
 if __name__ == "__main__":
-    checkpoint_path = "checkpoints/best_model.pth"
+    fallback_checkpoint = "checkpoints/best_model.pth"
     fallback_image = "flowers/test/1/image_06743.jpg"
-    topk = 5
+    fallback_topk = 5
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', type=str, default=fallback_checkpoint, help='Used Checklpoint')
+    parser.add_argument('--image', type=str, default=fallback_image, help='Used Image')
+    parser.add_argument('--topk', type=int, default=fallback_topk, help='Number of shown predictions')
+    args = parser.parse_args()
+
 
     image_path = sys.argv[1] if len(sys.argv) > 1 else fallback_image
 
-    results = predict_label(checkpoint_path, image_path, topk=topk)
+    results = predict_label(args.checkpoint, image_path, topk=args.topk)
     print(results)
 
     # Get tensor image for imshow
